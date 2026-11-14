@@ -20,6 +20,34 @@
 </head>
 <body>
 <canvas id="game"></canvas>
-<script src="game.js"></script>
+<script>
+/* 启动代码：先拿最新构建号，再用 game.js?b=构建号 加载游戏（发新版后一定拿新的）。尽量别再改这里 */
+(function () {
+  function pickBuild(fetched, stored) {
+  if (fetched) return String(fetched);
+  if (stored) return String(stored);
+  return '';
+}
+  var KEY = 'starland_build', stored = null, started = false;
+  try { stored = localStorage.getItem(KEY); } catch (e) {}
+  function start(fetched) {
+    if (started) return;
+    started = true;
+    var b = pickBuild(fetched, stored);
+    if (fetched) { try { localStorage.setItem(KEY, fetched); } catch (e) {} }
+    window.__BUILD = b;
+    var s = document.createElement('script');
+    s.src = b ? 'game.js?b=' + encodeURIComponent(b) : 'game.js';
+    document.body.appendChild(s);
+  }
+  setTimeout(function () { start(null); }, 3000);
+  try {
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { start(j && j.build ? String(j.build) : null); })
+      .catch(function () { start(null); });
+  } catch (e) { start(null); }
+})();
+</script>
 </body>
 </html>
